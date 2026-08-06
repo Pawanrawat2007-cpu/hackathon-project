@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAPID // Disaster Rescue Command Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+         :root {
+            --bg-void: #080b10;
+            --bg-panel: #10151d;
+            --bg-panel-raised: #171e29;
+            --line: #232c3a;
+            --line-bright: #34415a;
+            --text-primary: #e9eef6;
+            --text-dim: #8b96a8;
+            --text-faint: #57637a;
+            --critical: #ff4d5e;
+            --critical-dim: #451820;
+            --warning: #ffab3d;
+            --warning-dim: #453218;
+            --safe: #2ddab0;
+            --safe-dim: #0f3d34;
+            --info: #4f8cff;
+            --info-dim: #142642;
+            --font-display: 'Oswald', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+            background-size: 42px 42px;
+            background-position: -1px -1px;
+            background-attachment: fixed;
+        }
+        
+         ::selection {
+            background: var(--info);
+            color: #fff;
+        }
+        
+        .wrap {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 18px 22px 60px;
+        }
+        /* ---------- TOPBAR ---------- */
+        
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: var(--bg-panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--critical), var(--warning));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 18px;
+            color: #0a0a0a;
+            flex-shrink: 0;
+        }
+        
+        .brand-text h1 {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 20px;
+            letter-spacing: 0.5px;
+        }
+        
+        .brand-text span {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex-wrap: wrap;
+        }
+        
+        .status-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-dim);
+            padding: 7px 12px;
+            border: 1px solid var(--line);
+            border-radius: 20px;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--safe);
+            box-shadow: 0 0 8px var(--safe);
+        }
+        
+        .dot.pulse {
+            animation: dotpulse 1.6s ease-in-out infinite;
+        }
+        
+        @keyframes dotpulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.35;
+            }
+        }
+        
+        #clock {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+        }
+        
+        .toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+        
+        .toggle {
+            width: 38px;
+            height: 20px;
+            border-radius: 12px;
+            background: var(--line-bright);
+            position: relative;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            top: 2px;
+            left: 2px;
+            transition: all .2s ease;
+        }
+        
+        .toggle.on {
+            background: var(--warning-dim);
+        }
+        
+        .toggle.on::after {
+            left: 20px;
+            background: var(--warning);
+        }
+        
+        .offline-banner {
+            display: none;
+            background: var(--warning-dim);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 9px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.3px;
+        }
+        
+        body.offline .offline-banner {
+            display: flex;
+        }
+        /* ---------- GRID ---------- */
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 340px;
+            gap: 16px;
+            align-items: start;
+        }
+        
+        @media (max-width: 1180px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--line);
+        }
+        
+        .panel-head h2 {
+            font-family: var(--font-display);
+            font-size: 14px;
+            letter-spacing: 1px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-primary);
+        }
+        
+        .panel-head .tag {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-faint);
+            letter-spacing: 1px;
+        }
+        
+        .panel-body {
+            padding: 16px;
+        }
+        /* ---------- LEFT COL ---------- */
+        
+        .sos-panel {
+            padding: 22px 16px;
+            text-align: center;
+        }
+        
+        .sos-btn {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin: 6px auto 14px;
+            background: radial-gradient(circle at 35% 30%, #ff6b78, var(--critical) 70%);
+            border: none;
+            color: #1a0508;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 0 0 0 rgba(255, 77, 94, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sos-btn::before,
+        .sos-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 1.5px solid var(--critical);
+            opacity: 0;
+            animation: ping 2.2s ease-out infinite;
+        }
+        
+        .sos-btn::after {
+            animation-delay: 1.1s;
+        }
+        
+        @keyframes ping {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1.85);
+                opacity: 0;
+            }
+        }
+        
+        .sos-btn:active {
+            transform: scale(0.96);
+        }
+        
+        .sos-sub {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+        
+        .stat-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        
+        .stat-box {
+            background: var(--bg-panel-raised);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+        
+        .stat-box .num {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .stat-box .lbl {
+            font-family: var(--font-mono);
+            font-size: 9.5px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-top: 2px;
+        }
+        
+        .stat-box.crit .num {
+            color: var(--critical);
+        }
+        
+        .stat-box.warn .num {
+            color: var(--warning);
+        }
+        
+        .stat-box.safe .num {
+            color: var(--safe);
+        }
+        
+        .stat-box.info .num {
+            color: var(--info);
+        }
+        /* ---------- MAP ---------- */
+        
+        .map-wrap {
+            position: relative;
+            height: 420px;
+        }
+        
+        svg.mapsvg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: radial-gradient(circle at 30% 20%, #101c2c 0%, var(--bg-void) 70%);
+        }
+        
+        .zone-pulse {
+            animation: zonepulse 2.4s ease-in-out infinite;
+        }
+        
+        @keyframes zonepulse {
+            0%,
+            100% {
+                r: 9;
+                opacity: 0.9;
+            }
+            50% {
+                r: 15;
+                opacity: 0.25;
+            }
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            background: rgba(8, 11, 16, 0.7);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+        
+        .legend-item .sw {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+        }
+        
+        .zone-tip {
+            position: absolute;
+            pointer-events: none;
+            background: var(--bg-panel-raised);
+            border: 1px solid var(--line-bright);
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-primary);
+            display: none;
+            min-width: 170px;
+            z-index: 5;
+        }
+        
+        .zone-tip .t-title {
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 12.5px;
+            margin-bottom: 3px;
+        }
+        
+        .zone-tip .t-row {
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        /* ---------- ALERTS ---------- */
+        
+        .alerts-list {
+            max-height: 420px;
+            overflow-y: auto;
+        }
+        
+        .alert-item {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            gap: 10px;
+            animation: slidein .35s ease;
+        }
+        
+        @keyframes slidein {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-item .bar {
+            width: 3px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        
+        .alert-item.critical .bar {
+            background: var(--critical);
+        }
+        
+        .alert-item.warning .bar {
+            background: var(--warning);
+        }
+        
+        .alert-item.info .bar {
+            background: var(--info);
+        }
+        
+        .alert-item.safe .bar {
+            background: var(--safe);
+        }
+        
+        .alert-item .msg {
+            font-size: 12.5px;
+            line-height: 1.45;
+            color: var(--text-primary);
+        }
+        
+        .alert-item .ts {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-faint);
+            margin-top: 3px;
+        }
+        
+        .alerts-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .alerts-list::-webkit-scrollbar-thumb {
+            background: var(--line-bright);
+            border-radius: 4px;
+        }
+        /* ---------- BOTTOM ROW ---------- */
+        
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+            align-items: start;
+        }
+        
+        @media (max-width: 1180px) {
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* AI damage assessment */
+        
+        .upload-zone {
+            border: 1.5px dashed var(--line-bright);
+            border-radius: 8px;
+            padding: 18px;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 11.5px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: border-color .15s;
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--info);
+            color: var(--text-primary);
+        }
+        
+        .upload-zone input {
+            display: none;
+        }
+        
+        canvas#damageCanvas {
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid var(--line);
+        }
+        
+        .damage-result {
+            display: none;
+            margin-top: 12px;
+        }
+        
+        .sev-bar {
+            height: 8px;
+            border-radius: 5px;
+            background: var(--bg-panel-raised);
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        
+        .sev-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 1s cubic-bezier(.2, .8, .2, 1);
+        }
+        
+        .sev-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-top: 10px;
+        }
+        
+        .sev-label .name {
+            font-family: var(--font-display);
+            font-size: 15px;
+            letter-spacing: 0.5px;
+        }
+        
+        .sev-label .score {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        
+        .ai-tag {
+            font-family: var(--font-mono);
+            font-size: 9.5px;
+            color: var(--text-faint);
+            margin-top: 8px;
+            letter-spacing: 0.4px;
+        }
+        
+        .analyzing {
+            display: none;
+            font-family: var(--font-mono);
+            font-size: 11.5px;
+            color: var(--info);
+            margin-top: 10px;
+        }
+        /* hospitals/shelters */
+        
+        .facility-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
+        }
+        
+        .facility-item:last-child {
+            border-bottom: none;
+        }
+        
+        .facility-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+        
+        .facility-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .facility-dist {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--info);
+        }
+        
+        .facility-meta {
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            color: var(--text-dim);
+            margin-top: 3px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .facility-link {
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            color: var(--safe);
+            text-decoration: none;
+            margin-top: 5px;
+            display: inline-block;
+        }
+        
+        .facility-link:hover {
+            text-decoration: underline;
+        }
+        /* volunteers */
+        
+        .vol-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--line);
+            gap: 8px;
+        }
+        
+        .vol-item:last-child {
+            border-bottom: none;
+        }
+        
+        .vol-name {
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+        
+        .vol-role {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+        
+        .status-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 4px 9px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            white-space: nowrap;
+            user-select: none;
+        }
+        
+        .status-badge.Available {
+            background: var(--safe-dim);
+            color: var(--safe);
+            border-color: var(--safe);
+        }
+        
+        .status-badge.EnRoute {
+            background: var(--warning-dim);
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+        
+        .status-badge.OnScene {
+            background: var(--info-dim);
+            color: var(--info);
+            border-color: var(--info);
+        }
+        /* admin strip */
+        
+        .admin-strip {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 16px;
+        }
+        
+        @media (max-width: 1180px) {
+            .admin-strip {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            height: 150px;
+            padding: 10px 6px 0;
+        }
+        
+        .bar-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .bar-track {
+            width: 100%;
+            height: 110px;
+            display: flex;
+            align-items: flex-end;
+        }
+        
+        .bar-fill {
+            width: 100%;
+            border-radius: 5px 5px 0 0;
+            transition: height 1.2s cubic-bezier(.2, .8, .2, 1);
+        }
+        
+        .bar-col .name {
+            font-family: var(--font-mono);
+            font-size: 9.5px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+        
+        .bar-col .val {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-primary);
+        }
+        
+        .donut-wrap {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .donut-num {
+            font-family: var(--font-display);
+            font-size: 26px;
+            font-weight: 600;
+        }
+        
+        .donut-lbl {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+        /* modal */
+        
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 9, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            backdrop-filter: blur(2px);
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--bg-panel-raised);
+            border: 1px solid var(--line-bright);
+            border-radius: 12px;
+            padding: 26px 28px;
+            width: 340px;
+            text-align: center;
+        }
+        
+        .modal h3 {
+            font-family: var(--font-display);
+            font-size: 18px;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        
+        .modal p {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        
+        .modal .coords {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--safe);
+            margin-bottom: 16px;
+        }
+        
+        .modal button {
+            background: var(--critical);
+            border: none;
+            color: #fff;
+            font-family: var(--font-display);
+            letter-spacing: 1px;
+            padding: 10px 20px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .spinner {
+            width: 34px;
+            height: 34px;
+            border: 3px solid var(--line-bright);
+            border-top-color: var(--critical);
+            border-radius: 50%;
+            margin: 0 auto 14px;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 26px;
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            color: var(--text-faint);
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+
+        <div class="topbar">
+            <div class="brand">
+                <div class="brand-mark">R</div>
+                <div class="brand-text">
+                    <h1>RAPID Command Console</h1>
+                    <span>SMART DISASTER RESCUE &amp; COORDINATION AI</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="status-chip"><span class="dot pulse" id="netDot"></span><span id="netLabel">LIVE FEED CONNECTED</span></div>
+                <div id="clock" class="status-chip"></div>
+                <div class="toggle-wrap">
+                    OFFLINE MODE
+                    <button class="toggle" id="offlineToggle" onclick="toggleOffline()"></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="offline-banner">⚠ OFFLINE EMERGENCY MODE ACTIVE — Using last cached zone &amp; facility data. SOS requests queue locally and send via SMS gateway (*911#) when signal returns.</div>
+
+        <div class="grid">
+            <!-- LEFT: SOS + stats -->
+            <div class="panel sos-panel">
+                <button class="sos-btn" onclick="sendSOS()">SOS</button>
+                <div class="sos-sub">ONE-TAP EMERGENCY ALERT<br>Sends your GPS location + status<br>to the nearest rescue team</div>
+                <div class="stat-row">
+                    <div class="stat-box crit">
+                        <div class="num" id="statIncidents">7</div>
+                        <div class="lbl">Active incidents</div>
+                    </div>
+                    <div class="stat-box info">
+                        <div class="num" id="statTeams">14</div>
+                        <div class="lbl">Teams deployed</div>
+                    </div>
+                    <div class="stat-box safe">
+                        <div class="num" id="statRescued">238</div>
+                        <div class="lbl">People rescued</div>
+                    </div>
+                    <div class="stat-box warn">
+                        <div class="num" id="statShelters">9</div>
+                        <div class="lbl">Shelters open</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CENTER: Live map -->
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Live Disaster Map</h2><span class="tag" id="mapTag">SCAN · UPDATED 2S AGO</span></div>
+                <div class="panel-body map-wrap">
+                    <svg class="mapsvg" viewBox="0 0 800 460" id="mapSvg">
+          <defs>
+            <linearGradient id="sweepGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#4f8cff" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#4f8cff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,300 C150,260 250,340 400,300 C550,260 650,330 800,290 L800,460 L0,460 Z" fill="#0e1826" stroke="none"/>
+          <path d="M0,300 C150,260 250,340 400,300 C550,260 650,330 800,290" fill="none" stroke="#233247" stroke-width="2"/>
+          <g id="sweepGroup">
+            <path d="M400,230 L400,40 A190,190 0 0,1 566,132 Z" fill="url(#sweepGrad)">
+              <animateTransform attributeName="transform" type="rotate" from="0 400 230" to="360 400 230" dur="4.5s" repeatCount="indefinite"/>
+            </path>
+          </g>
+          <circle cx="400" cy="230" r="190" fill="none" stroke="#1c2636" stroke-width="1"/>
+          <circle cx="400" cy="230" r="120" fill="none" stroke="#1c2636" stroke-width="1"/>
+          <circle cx="400" cy="230" r="50" fill="none" stroke="#1c2636" stroke-width="1"/>
+
+          <!-- zone markers: flood(info-blue-ish uses critical/warning/safe per type) -->
+          <g class="zone" data-title="Riverside Colony — FLOOD" data-sev="Critical" data-victims="42" data-color="var(--critical)">
+            <circle cx="300" cy="310" r="9" fill="#ff4d5e" class="zone-pulse"/>
+            <circle cx="300" cy="310" r="5" fill="#ff4d5e"/>
+          </g>
+          <g class="zone" data-title="Sector 7 — EARTHQUAKE" data-sev="Critical" data-victims="65" data-color="var(--critical)">
+            <circle cx="480" cy="180" r="9" fill="#ff4d5e" class="zone-pulse"/>
+            <circle cx="480" cy="180" r="5" fill="#ff4d5e"/>
+          </g>
+          <g class="zone" data-title="Industrial Belt — FIRE" data-sev="Warning" data-victims="11" data-color="var(--warning)">
+            <circle cx="600" cy="330" r="8" fill="#ffab3d" class="zone-pulse"/>
+            <circle cx="600" cy="330" r="4.5" fill="#ffab3d"/>
+          </g>
+          <g class="zone" data-title="Lakeview Township — FLOOD" data-sev="Warning" data-victims="19" data-color="var(--warning)">
+            <circle cx="200" cy="150" r="8" fill="#ffab3d" class="zone-pulse"/>
+            <circle cx="200" cy="150" r="4.5" fill="#ffab3d"/>
+          </g>
+          <g class="zone" data-title="Northgate Relief Camp — SHELTER" data-sev="Stable" data-victims="180 housed" data-color="var(--safe)">
+            <circle cx="420" cy="90" r="7" fill="#2ddab0"/>
+            <rect x="414" y="84" width="12" height="12" fill="none" stroke="#2ddab0" stroke-width="1.4"/>
+          </g>
+          <g class="zone" data-title="City General Hospital" data-sev="Operational" data-victims="34 beds free" data-color="var(--info)">
+            <circle cx="540" cy="240" r="7" fill="#4f8cff"/>
+            <rect x="536" y="232" width="8" height="16" fill="#4f8cff"/>
+            <rect x="530" y="238" width="20" height="4" fill="#4f8cff"/>
+          </g>
+        </svg>
+                    <div class="legend">
+                        <div class="legend-item"><span class="sw" style="background:#ff4d5e"></span>Critical zone</div>
+                        <div class="legend-item"><span class="sw" style="background:#ffab3d"></span>Warning zone</div>
+                        <div class="legend-item"><span class="sw" style="background:#2ddab0"></span>Shelter</div>
+                        <div class="legend-item"><span class="sw" style="background:#4f8cff"></span>Hospital</div>
+                    </div>
+                    <div class="zone-tip" id="zoneTip"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT: alerts -->
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Real-Time Alerts</h2><span class="tag">AUTO-REFRESH</span></div>
+                <div class="alerts-list" id="alertsList"></div>
+            </div>
+        </div>
+
+        <!-- BOTTOM ROW -->
+        <div class="bottom-grid">
+            <!-- AI damage assessment -->
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>AI Damage Assessment</h2><span class="tag">VISION MODEL v0.3</span></div>
+                <div class="panel-body">
+                    <label class="upload-zone" id="uploadZone">
+          ⬆ DROP OR TAP TO UPLOAD SITE PHOTO<br><span style="opacity:.6">JPG / PNG — analyzed on-device</span>
+          <input type="file" accept="image/*" id="imgInput">
+        </label>
+                    <canvas id="damageCanvas"></canvas>
+                    <div class="analyzing" id="analyzing">▸ RUNNING INFERENCE — detecting structural &amp; surface damage…</div>
+                    <div class="damage-result" id="damageResult">
+                        <div class="sev-label"><span class="name" id="sevName">—</span><span class="score" id="sevScore">0/100</span></div>
+                        <div class="sev-bar">
+                            <div class="sev-bar-fill" id="sevFill"></div>
+                        </div>
+                        <div class="ai-tag" id="sevNote">Recommended action: —</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hospitals/Shelters -->
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Nearest Facilities</h2><span class="tag">SORTED BY DISTANCE</span></div>
+                <div class="panel-body" id="facilityList"></div>
+            </div>
+
+            <!-- Volunteers -->
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Rescue &amp; Volunteer Teams</h2><span class="tag">TAP STATUS TO UPDATE</span></div>
+                <div class="panel-body" id="volList"></div>
+            </div>
+        </div>
+
+        <!-- ADMIN STRIP -->
+        <div class="admin-strip">
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Resources Deployed by Zone</h2><span class="tag">ADMIN OVERVIEW</span></div>
+                <div class="panel-body">
+                    <div class="bar-chart" id="barChart"></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Rescue Completion</h2><span class="tag">TODAY</span></div>
+                <div class="panel-body donut-wrap">
+                    <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle cx="55" cy="55" r="46" fill="none" stroke="#1c2636" stroke-width="10"/>
+          <circle id="donutRing" cx="55" cy="55" r="46" fill="none" stroke="#2ddab0" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 55 55)"/>
+        </svg>
+                    <div>
+                        <div class="donut-num" id="donutNum">0%</div>
+                        <div class="donut-lbl">Cases resolved</div>
+                        <div class="donut-lbl" style="margin-top:10px; color:var(--warning)">18 cases pending</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>RAPID CONSOLE — HACKATHON PROTOTYPE · ALL DATA SIMULATED FOR DEMO PURPOSES</footer>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="spinner" id="modalSpinner"></div>
+            <h3 id="modalTitle">Sending SOS…</h3>
+            <p id="modalText">Transmitting your live location to the nearest rescue coordination team.</p>
+            <div class="coords" id="modalCoords"></div>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        /* ---------- CLOCK ---------- */
+        function tickClock() {
+            const d = new Date();
+            document.getElementById('clock').textContent = d.toLocaleTimeString('en-GB', {
+                hour12: false
+            }) + ' IST';
+        }
+        tickClock();
+        setInterval(tickClock, 1000);
+
+        /* ---------- OFFLINE TOGGLE ---------- */
+        let offline = false;
+
+        function toggleOffline() {
+            offline = !offline;
+            document.body.classList.toggle('offline', offline);
+            document.getElementById('offlineToggle').classList.toggle('on', offline);
+            document.getElementById('netDot').style.background = offline ? 'var(--warning)' : 'var(--safe)';
+            document.getElementById('netDot').style.boxShadow = offline ? '0 0 8px var(--warning)' : '0 0 8px var(--safe)';
+            document.getElementById('netLabel').textContent = offline ? 'OFFLINE — CACHED DATA' : 'LIVE FEED CONNECTED';
+            document.getElementById('mapTag').textContent = offline ? 'CACHED · LAST SYNC 6M AGO' : 'SCAN · UPDATED 2S AGO';
+            if (offline) {
+                clearInterval(alertTimer);
+            } else {
+                startAlertTimer();
+            }
+        }
+
+        /* ---------- SOS ---------- */
+        function sendSOS() {
+            const lat = (28.60 + Math.random() * 0.05).toFixed(4);
+            const lon = (77.20 + Math.random() * 0.05).toFixed(4);
+            document.getElementById('modalSpinner').style.display = 'block';
+            document.getElementById('modalTitle').textContent = 'Sending SOS…';
+            document.getElementById('modalText').textContent = offline ?
+                'No live signal — queued for SMS dispatch to *911# when network returns.' :
+                'Transmitting your live location to the nearest rescue coordination team.';
+            document.getElementById('modalCoords').textContent = '';
+            document.getElementById('modalOverlay').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('modalSpinner').style.display = 'none';
+                document.getElementById('modalTitle').textContent = offline ? 'SOS Queued' : 'SOS Confirmed';
+                document.getElementById('modalText').textContent = offline ?
+                    'Your alert will auto-send the moment a signal is detected. Stay where you are if safe to do so.' :
+                    'Help has been notified and is being dispatched to your coordinates.';
+                document.getElementById('modalCoords').textContent = `LAT ${lat}  ·  LON ${lon}`;
+                pushAlert('critical', `New SOS received near LAT ${lat}, LON ${lon} — dispatch pending`);
+                bumpStat('statIncidents', 1);
+            }, 1400);
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
+
+        function bumpStat(id, delta) {
+            const el = document.getElementById(id);
+            el.textContent = parseInt(el.textContent) + delta;
+        }
+
+        /* ---------- ZONE TOOLTIP ---------- */
+        const tip = document.getElementById('zoneTip');
+        document.querySelectorAll('.zone').forEach(z => {
+            z.style.cursor = 'pointer';
+            z.addEventListener('mousemove', (e) => {
+                const rect = document.getElementById('mapSvg').getBoundingClientRect();
+                tip.style.display = 'block';
+                tip.style.left = (e.clientX - rect.left + 14) + 'px';
+                tip.style.top = (e.clientY - rect.top - 10) + 'px';
+                tip.innerHTML = `<div class="t-title">${z.dataset.title}</div>
+        <div class="t-row"><span>Status</span><span>${z.dataset.sev}</span></div>
+        <div class="t-row"><span>Reported</span><span>${z.dataset.victims}</span></div>`;
+            });
+            z.addEventListener('mouseleave', () => {
+                tip.style.display = 'none';
+            });
+        });
+
+        /* ---------- ALERTS FEED ---------- */
+        const alertsPool = [
+            ['warning', 'Water level rising in Riverside Colony — evacuation advised'],
+            ['info', 'Team Falcon-3 arrived on scene at Sector 7'],
+            ['safe', '12 residents evacuated safely from Lakeview Township'],
+            ['critical', 'Aftershock detected — magnitude 3.2 near Sector 7'],
+            ['info', 'Drone survey completed for Industrial Belt fire zone'],
+            ['warning', 'Shelter Northgate nearing capacity — 92% full'],
+            ['safe', 'Road cleared on Sector 7 access route, ambulances moving'],
+            ['critical', 'New structural collapse reported, Block C, Sector 7'],
+        ];
+        const alertsList = document.getElementById('alertsList');
+
+        function pushAlert(type, msg) {
+            const item = document.createElement('div');
+            item.className = `alert-item ${type}`;
+            const now = new Date().toLocaleTimeString('en-GB', {
+                hour12: false
+            });
+            item.innerHTML = `<div class="bar"></div><div><div class="msg">${msg}</div><div class="ts">${now}</div></div>`;
+            alertsList.prepend(item);
+            while (alertsList.children.length > 14) {
+                alertsList.removeChild(alertsList.lastChild);
+            }
+        }
+        [...alertsPool].slice(0, 5).forEach(([t, m]) => pushAlert(t, m));
+        let alertTimer;
+
+        function startAlertTimer() {
+            alertTimer = setInterval(() => {
+                const [t, m] = alertsPool[Math.floor(Math.random() * alertsPool.length)];
+                pushAlert(t, m);
+                if (t === 'safe') bumpStat('statRescued', Math.ceil(Math.random() * 5));
+            }, 5500);
+        }
+        startAlertTimer();
+
+        /* ---------- AI DAMAGE ASSESSMENT (on-device heuristic demo) ---------- */
+        const imgInput = document.getElementById('imgInput');
+        const canvas = document.getElementById('damageCanvas');
+        const ctx = canvas.getContext('2d');
+        imgInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const img = new Image();
+            img.onload = () => {
+                const w = 480,
+                    h = Math.round(480 * img.height / img.width);
+                canvas.width = w;
+                canvas.height = h;
+                canvas.style.display = 'block';
+                ctx.drawImage(img, 0, 0, w, h);
+                document.getElementById('analyzing').style.display = 'block';
+                document.getElementById('damageResult').style.display = 'none';
+                setTimeout(() => analyzeDamage(w, h), 1200);
+            };
+            img.src = URL.createObjectURL(file);
+        });
+
+        function analyzeDamage(w, h) {
+            const data = ctx.getImageData(0, 0, w, h).data;
+            let edgeSum = 0,
+                darkSum = 0,
+                n = 0;
+            for (let y = 1; y < h - 1; y += 4) {
+                for (let x = 1; x < w - 1; x += 4) {
+                    const i = (y * w + x) * 4;
+                    const iRight = (y * w + x + 1) * 4;
+                    const iDown = ((y + 1) * w + x) * 4;
+                    const lum = 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2];
+                    const lumR = 0.3 * data[iRight] + 0.59 * data[iRight + 1] + 0.11 * data[iRight + 2];
+                    const lumD = 0.3 * data[iDown] + 0.59 * data[iDown + 1] + 0.11 * data[iDown + 2];
+                    edgeSum += Math.abs(lum - lumR) + Math.abs(lum - lumD);
+                    darkSum += (255 - lum);
+                    n++;
+                }
+            }
+            const edgeAvg = edgeSum / n;
+            const darkAvg = darkSum / n;
+            let score = Math.min(97, Math.round((edgeAvg * 0.9 + darkAvg * 0.18)));
+            score = Math.max(8, score);
+            let label, color, note;
+            if (score < 30) {
+                label = 'MINOR DAMAGE';
+                color = 'var(--safe)';
+                note = 'Structure stable — flag for routine inspection.';
+            } else if (score < 55) {
+                label = 'MODERATE DAMAGE';
+                color = 'var(--warning)';
+                note = 'Recommend engineering review before re-entry.';
+            } else if (score < 78) {
+                label = 'SEVERE DAMAGE';
+                color = 'var(--critical)';
+                note = 'Deploy rescue unit — possible trapped occupants.';
+            } else {
+                label = 'CRITICAL / COLLAPSE';
+                color = 'var(--critical)';
+                note = 'Priority dispatch — search &amp; rescue team required immediately.';
+            }
+            document.getElementById('analyzing').style.display = 'none';
+            document.getElementById('damageResult').style.display = 'block';
+            document.getElementById('sevName').textContent = label;
+            document.getElementById('sevName').style.color = color;
+            document.getElementById('sevScore').textContent = score + '/100';
+            const fill = document.getElementById('sevFill');
+            fill.style.background = color;
+            fill.style.width = score + '%';
+            document.getElementById('sevNote').innerHTML = 'Recommended action: ' + note;
+            pushAlert(score >= 55 ? 'critical' : 'warning', `AI assessment: ${label.toLowerCase()} detected in uploaded image (score ${score}/100)`);
+        }
+
+        /* ---------- FACILITIES ---------- */
+        const facilities = [{
+            name: 'City General Hospital',
+            type: 'Hospital',
+            dist: '1.2 km',
+            meta: '34 beds free · Trauma ready',
+            lat: 28.6139,
+            lon: 77.2090
+        }, {
+            name: 'Northgate Relief Camp',
+            type: 'Shelter',
+            dist: '2.0 km',
+            meta: '180 housed · Food + medical',
+            lat: 28.6250,
+            lon: 77.2150
+        }, {
+            name: 'St. Marys Medical Center',
+            type: 'Hospital',
+            dist: '3.4 km',
+            meta: '11 beds free · ICU available',
+            lat: 28.6300,
+            lon: 77.2000
+        }, {
+            name: 'Riverside Community Shelter',
+            type: 'Shelter',
+            dist: '4.1 km',
+            meta: 'Capacity 300 · 92% full',
+            lat: 28.6050,
+            lon: 77.1950
+        }, {
+            name: 'Sector 7 Field Hospital',
+            type: 'Hospital',
+            dist: '5.6 km',
+            meta: 'Mobile unit · Triage active',
+            lat: 28.6400,
+            lon: 77.2200
+        }, ];
+        const facilityList = document.getElementById('facilityList');
+        facilities.forEach(f => {
+            const div = document.createElement('div');
+            div.className = 'facility-item';
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}`;
+            div.innerHTML = `<div class="facility-top"><span class="facility-name">${f.name}</span><span class="facility-dist">${f.dist}</span></div>
+      <div class="facility-meta"><span>${f.type}</span><span>${f.meta}</span></div>
+      <a class="facility-link" href="${mapsUrl}" target="_blank" rel="noopener">Get directions →</a>`;
+            facilityList.appendChild(div);
+        });
+
+        /* ---------- VOLUNTEERS / TEAMS ---------- */
+        const volunteers = [{
+            name: 'Team Falcon-3',
+            role: 'Search & Rescue · Sector 7',
+            status: 'OnScene'
+        }, {
+            name: 'Team Delta-1',
+            role: 'Flood Response · Riverside',
+            status: 'EnRoute'
+        }, {
+            name: 'A. Sharma',
+            role: 'Medical Volunteer',
+            status: 'Available'
+        }, {
+            name: 'Team Ember',
+            role: 'Fire Response · Industrial Belt',
+            status: 'OnScene'
+        }, {
+            name: 'R. Verma',
+            role: 'Logistics Volunteer',
+            status: 'Available'
+        }, {
+            name: 'Team Delta-2',
+            role: 'Flood Response · Lakeview',
+            status: 'EnRoute'
+        }, ];
+        const statusCycle = ['Available', 'EnRoute', 'OnScene'];
+        const volList = document.getElementById('volList');
+
+        function renderVolunteers() {
+            volList.innerHTML = '';
+            volunteers.forEach((v, idx) => {
+                const div = document.createElement('div');
+                div.className = 'vol-item';
+                const display = v.status.replace('EnRoute', 'En Route').replace('OnScene', 'On Scene');
+                div.innerHTML = `<div><div class="vol-name">${v.name}</div><div class="vol-role">${v.role}</div></div>
+        <div class="status-badge ${v.status}" data-idx="${idx}">${display}</div>`;
+                volList.appendChild(div);
+            });
+            volList.querySelectorAll('.status-badge').forEach(b => {
+                b.addEventListener('click', () => {
+                    const idx = b.dataset.idx;
+                    const cur = statusCycle.indexOf(volunteers[idx].status);
+                    volunteers[idx].status = statusCycle[(cur + 1) % statusCycle.length];
+                    renderVolunteers();
+                });
+            });
+        }
+        renderVolunteers();
+
+        /* ---------- ADMIN BAR CHART ---------- */
+        const zoneResources = [{
+            name: 'Riverside',
+            val: 18,
+            color: 'var(--critical)'
+        }, {
+            name: 'Sector 7',
+            val: 26,
+            color: 'var(--critical)'
+        }, {
+            name: 'Industrial Belt',
+            val: 9,
+            color: 'var(--warning)'
+        }, {
+            name: 'Lakeview',
+            val: 12,
+            color: 'var(--warning)'
+        }, {
+            name: 'Northgate',
+            val: 6,
+            color: 'var(--safe)'
+        }, ];
+        const barChart = document.getElementById('barChart');
+        const maxVal = Math.max(...zoneResources.map(z => z.val));
+        zoneResources.forEach(z => {
+            const col = document.createElement('div');
+            col.className = 'bar-col';
+            col.innerHTML = `<div class="val">${z.val}</div>
+      <div class="bar-track"><div class="bar-fill" style="height:0%; background:${z.color}"></div></div>
+      <div class="name">${z.name}</div>`;
+            barChart.appendChild(col);
+            setTimeout(() => {
+                col.querySelector('.bar-fill').style.height = (z.val / maxVal * 100) + '%';
+            }, 200);
+        });
+
+        /* ---------- DONUT ---------- */
+        const donutRing = document.getElementById('donutRing');
+        const donutNum = document.getElementById('donutNum');
+        const circumference = 2 * Math.PI * 46;
+        const pct = 68;
+        setTimeout(() => {
+            donutRing.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)';
+            donutRing.setAttribute('stroke-dashoffset', circumference * (1 - pct / 100));
+            donutNum.textContent = pct + '%';
+        }, 300);
+    </script>
+</body>
+
+</html>
